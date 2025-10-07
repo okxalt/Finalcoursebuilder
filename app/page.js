@@ -16,6 +16,7 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [credits, setCredits] = useState(null);
+  const [crmContent, setCrmContent] = useState(null);
 
   async function safeJson(res) {
     try {
@@ -135,6 +136,29 @@ export default function HomePage() {
     } catch {}
   }
 
+  async function handleGenerateCrm() {
+    if (!courseOutline) return;
+    try {
+      setIsLoading(true);
+      setError(null);
+      const res = await fetch("/api/crm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ courseTitle: courseOutline.title, outline: courseOutline }),
+      });
+      if (!res.ok) {
+        const body = await safeJson(res);
+        throw new Error(body?.error || `Failed to generate CRM (${res.status})`);
+      }
+      const data = await res.json();
+      setCrmContent(data.content);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <main className="space-y-8">
       <header className="space-y-3">
@@ -172,6 +196,21 @@ export default function HomePage() {
           >
             {isLoading ? "Discovering..." : "Discover Opportunities"}
           </button>
+          <div className="rounded-xl border border-white/40 frosted p-4">
+            <h3 className="font-semibold">Buy credits</h3>
+            <p className="text-sm text-gray-700">1 course costs 10 credits. Suggested price: $4.99 per course.</p>
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[{c:10,price:"$4.99"},{c:30,price:"$12.99"},{c:60,price:"$22.99"}].map((p)=> (
+                <div key={p.c} className="rounded-lg border border-white/40 frosted p-4 flex items-center justify-between">
+                  <div>
+                    <div className="font-medium">{p.c} credits</div>
+                    <div className="text-sm text-gray-700">≈ {Math.floor(p.c/10)} course(s)</div>
+                  </div>
+                  <button className="glass-button px-3 py-1">Buy {p.price}</button>
+                </div>
+              ))}
+            </div>
+          </div>
         </section>
       )}
 
@@ -318,6 +357,21 @@ export default function HomePage() {
                 Download DOCX
               </button>
             </form>
+          )}
+          {generatedContent.length === courseOutline.chapters.length && (
+            <button
+              onClick={handleGenerateCrm}
+              disabled={isLoading}
+              className="inline-flex items-center rounded-md bg-white/80 backdrop-blur px-4 py-2 border border-gray-300"
+            >
+              {isLoading ? "Generating CRM..." : "Generate Go-to-Market CRM"}
+            </button>
+          )}
+          {crmContent && (
+            <article className="prose max-w-none">
+              <h3 className="text-xl font-semibold">CRM and Go-to-Market Pack</h3>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{crmContent}</ReactMarkdown>
+            </article>
           )}
           {generatedContent.length === courseOutline.chapters.length && (
             <button

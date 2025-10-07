@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { Document, Packer, Paragraph, HeadingLevel, TextRun } from "docx";
+import { Document, Packer, Paragraph, HeadingLevel, TextRun, SectionType, AlignmentType } from "docx";
+import { Theme } from "./tokens";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,27 +43,57 @@ export async function POST(request) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const doc = new Document({
-      sections: [
-        {
-          properties: {},
-          children: [
-            new Paragraph({ text: String(title), heading: HeadingLevel.TITLE }),
-            ...chapters.flatMap((ch, idx) => {
-              const header = new Paragraph({
-                text: `Chapter ${idx + 1}: ${ch.title || "Untitled"}`,
-                heading: HeadingLevel.HEADING_1,
-              });
-              const summaryParas = Array.isArray(ch.summary)
-                ? ch.summary.map((s) => new Paragraph({ text: String(s) }))
-                : [];
-              const contentParas = paragraphFromMarkdown(ch.content || "");
-              return [header, ...summaryParas, ...contentParas];
-            }),
-          ],
-        },
+    const titlePara = new Paragraph({
+      children: [
+        new TextRun({ text: String(title), bold: true, size: Theme.title.size, color: Theme.title.color }),
       ],
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 },
     });
+
+    const sections = [
+      {
+        properties: {
+          type: SectionType.CONTINUOUS,
+          page: {
+            margin: { top: 720, right: 720, bottom: 720, left: 720 },
+            pageBorders: undefined,
+            background: { color: Theme.pastelBg },
+          },
+        },
+        children: [
+          titlePara,
+          ...chapters.flatMap((ch, idx) => {
+            const h1 = new Paragraph({
+              children: [
+                new TextRun({ text: `Chapter ${idx + 1}: `, color: Theme.h1.color, size: Theme.h1.size, bold: true }),
+                new TextRun({ text: String(ch.title || "Untitled"), color: Theme.h1.color, size: Theme.h1.size }),
+              ],
+              heading: HeadingLevel.HEADING_1,
+              spacing: { before: 240, after: 200 },
+            });
+            const subhead = new Paragraph({
+              children: [new TextRun({ text: "Key Points", color: Theme.h2.color, size: Theme.h2.size, bold: true })],
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 120, after: 120 },
+            });
+            const summaryParas = Array.isArray(ch.summary)
+              ? ch.summary.map((s) => new Paragraph({ text: String(s), spacing: { after: 60 } }))
+              : [];
+            const contentHeader = new Paragraph({
+              children: [new TextRun({ text: "Chapter Content", color: Theme.h2.color, size: Theme.h2.size, bold: true })],
+              heading: HeadingLevel.HEADING_2,
+              spacing: { before: 160, after: 100 },
+            });
+            const contentParas = paragraphFromMarkdown(ch.content || "");
+            return [h1, subhead, ...summaryParas, contentHeader, ...contentParas];
+          }),
+        ],
+      },
+    ];
+
+    const doc = new Document({ sections });
 
     const buffer = await Packer.toBuffer(doc);
     return new NextResponse(buffer, {
