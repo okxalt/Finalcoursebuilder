@@ -17,20 +17,10 @@ export async function POST(request) {
     const content = await chat([
       { role: "system", content: "You are a precise assistant that outputs only the requested JSON when asked." },
       { role: "user", content: prompt },
-    ], { temperature: 0.2, max_tokens: 512, response_format: { type: "json_object" } });
+    ], { temperature: 0.2, max_tokens: 512 });
 
     let opportunities;
-    try {
-      const maybeObj = JSON.parse(content);
-      if (Array.isArray(maybeObj)) {
-        opportunities = maybeObj;
-      } else if (maybeObj && Array.isArray(maybeObj.opportunities)) {
-        opportunities = maybeObj.opportunities;
-      }
-    } catch {}
-    if (!opportunities) {
-      opportunities = extractJsonArray(content);
-    }
+    opportunities = extractJsonArray(content);
 
     // Sanitize and normalize
     opportunities = opportunities

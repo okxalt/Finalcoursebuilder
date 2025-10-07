@@ -21,14 +21,9 @@ export async function POST(request) {
     const content = await chat([
       { role: "system", content: "You are a precise assistant that outputs only the requested JSON structure." },
       { role: "user", content: prompt },
-    ], { temperature: 0.3, max_tokens: 2048, response_format: { type: "json_object" } });
+    ], { temperature: 0.3, max_tokens: 2048 });
 
-    let outline;
-    try {
-      outline = JSON.parse(content);
-    } catch {
-      outline = extractJsonObject(content);
-    }
+    const outline = extractJsonObject(content);
 
     // Basic validation of structure
     if (!outline || typeof outline !== "object" || !Array.isArray(outline.chapters)) {
