@@ -15,6 +15,7 @@ export default function HomePage() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [credits, setCredits] = useState(null);
 
   async function safeJson(res) {
     try {
@@ -28,6 +29,7 @@ export default function HomePage() {
     try {
       setIsLoading(true);
       setError(null);
+      await refreshCredits();
       const res = await fetch("/api/discover", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -57,6 +59,7 @@ export default function HomePage() {
     try {
       setIsLoading(true);
       setError(null);
+      await refreshCredits();
       const res = await fetch("/api/outline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,6 +88,7 @@ export default function HomePage() {
     try {
       setIsLoading(true);
       setError(null);
+      await refreshCredits();
       const chapter = courseOutline.chapters[idx];
       const res = await fetch("/api/generate", {
         method: "POST",
@@ -109,11 +113,38 @@ export default function HomePage() {
     }
   }
 
+  async function refreshCredits() {
+    try {
+      const res = await fetch("/api/credits", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCredits(data.credits);
+    } catch {}
+  }
+
+  async function devTopup() {
+    try {
+      const res = await fetch("/api/credits", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 5 }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      setCredits(data.credits);
+    } catch {}
+  }
+
   return (
     <main className="space-y-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-bold">AI Course Creator</h1>
         <p className="text-gray-600">Generate a complete course or ebook from a single idea.</p>
+        <div className="flex items-center gap-3 text-sm text-gray-700">
+          <span className="rounded border border-gray-300 bg-white px-2 py-1">Credits: {credits ?? "–"}</span>
+          <button onClick={refreshCredits} className="text-gray-600 hover:underline">Refresh</button>
+          <button onClick={devTopup} className="text-gray-600 hover:underline">Dev top-up +5</button>
+        </div>
       </header>
 
       {error && (
@@ -244,6 +275,45 @@ export default function HomePage() {
             <div className="rounded-md border border-green-300 bg-green-50 p-3 text-green-800">
               Course Complete!
             </div>
+          )}
+
+          {generatedContent.length === courseOutline.chapters.length && (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const payload = {
+                  title: courseOutline.title,
+                  chapters: courseOutline.chapters.map((ch, idx) => ({
+                    title: ch.title,
+                    summary: ch.summary,
+                    content: generatedContent[idx] || "",
+                  })),
+                };
+                const res = await fetch("/api/export", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
+                });
+                if (!res.ok) {
+                  const body = await safeJson(res);
+                  setError(body?.error || `Failed to export (${res.status})`);
+                  return;
+                }
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `${courseOutline.title}.docx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+              }}
+            >
+              <button type="submit" className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2">
+                Download DOCX
+              </button>
+            </form>
           )}
         </section>
       )}

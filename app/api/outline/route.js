@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { chat, extractJsonObject } from "@/lib/groq";
+import { getCosts, ensureCredits, decrementCredits } from "@/lib/credits";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,11 @@ export async function POST(request) {
     }
 
     const prompt = `Create a course outline for a book titled "${opportunityTitle}". It must have exactly ${n} chapters. For each chapter, provide a \"title\" and a \"summary\" (an array of 3-5 strings detailing key learning points). Return ONLY a valid JSON object in this format: { \"title\": \"...\", \"chapters\": [{ \"title\": \"...\", \"summary\": [\"...\", \"...\"] }] }`;
+
+    const costs = getCosts();
+    if (!ensureCredits(costs.outline)) {
+      return NextResponse.json({ error: "Not enough credits" }, { status: 402 });
+    }
 
     const content = await chat([
       { role: "system", content: "You are a precise assistant that outputs only the requested JSON structure." },
@@ -48,6 +54,7 @@ export async function POST(request) {
       return { title, summary };
     });
 
+    decrementCredits(costs.outline);
     return NextResponse.json(outline);
   } catch (error) {
     // eslint-disable-next-line no-console
