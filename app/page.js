@@ -16,6 +16,14 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  async function safeJson(res) {
+    try {
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
   async function handleDiscover() {
     try {
       setIsLoading(true);
@@ -25,7 +33,10 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: userInput }),
       });
-      if (!res.ok) throw new Error("Failed to fetch opportunities");
+      if (!res.ok) {
+        const body = await safeJson(res);
+        throw new Error(body?.error || `Failed to fetch opportunities (${res.status})`);
+      }
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("Unexpected response format");
       setOpportunities(data);
@@ -51,7 +62,10 @@ export default function HomePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ opportunityTitle: selectedOpportunity, numChapters }),
       });
-      if (!res.ok) throw new Error("Failed to generate outline");
+      if (!res.ok) {
+        const body = await safeJson(res);
+        throw new Error(body?.error || `Failed to generate outline (${res.status})`);
+      }
       const outline = await res.json();
       setCourseOutline(outline);
       setGeneratedContent([]);
@@ -81,7 +95,10 @@ export default function HomePage() {
           learningObjectives: Array.isArray(chapter.summary) ? chapter.summary : [],
         }),
       });
-      if (!res.ok) throw new Error("Failed to generate chapter");
+      if (!res.ok) {
+        const body = await safeJson(res);
+        throw new Error(body?.error || `Failed to generate chapter (${res.status})`);
+      }
       const { content } = await res.json();
       setGeneratedContent((prev) => [...prev, content]);
       setCurrentChapterIndex((prev) => prev + 1);

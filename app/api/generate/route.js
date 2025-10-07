@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { chat } from "@/lib/groq";
 
+export const runtime = "nodejs";
+
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
@@ -29,6 +31,9 @@ export async function POST(request) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("/api/generate error", error);
-    return NextResponse.json({ error: "Failed to generate chapter content" }, { status: 500 });
+    return NextResponse.json(
+      { error: error?.message || "Failed to generate chapter content" },
+      { status: 500 }
+    );
   }
 }

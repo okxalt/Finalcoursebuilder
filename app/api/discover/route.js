@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { chat, extractJsonArray } from "@/lib/groq";
 
+export const runtime = "nodejs";
+
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
@@ -22,6 +24,9 @@ export async function POST(request) {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error("/api/discover error", error);
-    return NextResponse.json({ error: "Failed to discover opportunities" }, { status: 500 });
+    return NextResponse.json(
+      { error: error?.message || "Failed to discover opportunities" },
+      { status: 500 }
+    );
   }
 }
