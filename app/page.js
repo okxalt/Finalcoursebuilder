@@ -137,13 +137,17 @@ export default function HomePage() {
 
   return (
     <main className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold">AI Course Creator</h1>
-        <p className="text-gray-600">Generate a complete course or ebook from a single idea.</p>
-        <div className="flex items-center gap-3 text-sm text-gray-700">
-          <span className="rounded border border-gray-300 bg-white px-2 py-1">Credits: {credits ?? "–"}</span>
-          <button onClick={refreshCredits} className="text-gray-600 hover:underline">Refresh</button>
-          <button onClick={devTopup} className="text-gray-600 hover:underline">Dev top-up +5</button>
+      <header className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight">AI Course Creator</h1>
+            <p className="text-gray-700">Generate a complete course or ebook from a single idea.</p>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-gray-700">
+            <span className="rounded-full bg-white/70 backdrop-blur px-3 py-1 border border-white/40 shadow">Credits: {credits ?? "–"}</span>
+            <button onClick={refreshCredits} className="glass-button px-3 py-1">Refresh</button>
+            <button onClick={devTopup} className="glass-button px-3 py-1">Dev top-up +5</button>
+          </div>
         </div>
       </header>
 
@@ -159,12 +163,12 @@ export default function HomePage() {
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             placeholder="A guide to sourdough baking for beginners"
-            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 focus:border-black focus:outline-none"
+            className="w-full rounded-md border border-gray-300 bg-white/70 backdrop-blur px-3 py-3 focus:border-black focus:outline-none"
           />
           <button
             onClick={handleDiscover}
             disabled={isLoading || userInput.trim().length === 0}
-            className="inline-flex items-center rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
+            className="inline-flex items-center rounded-md bg-gradient-to-r from-indigo-600 to-pink-500 px-5 py-2.5 text-white disabled:opacity-50 shadow hover:opacity-90"
           >
             {isLoading ? "Discovering..." : "Discover Opportunities"}
           </button>
@@ -179,7 +183,7 @@ export default function HomePage() {
               <button
                 key={title}
                 onClick={() => handleSelectOpportunity(title)}
-                className="text-left rounded-md border border-gray-200 bg-white p-4 hover:border-gray-400"
+                className="text-left rounded-xl border border-white/40 frosted p-4 hover:border-white/60"
               >
                 <span className="font-medium">{title}</span>
               </button>
@@ -211,14 +215,14 @@ export default function HomePage() {
               max={50}
               value={numChapters}
               onChange={(e) => setNumChapters(parseInt(e.target.value || "0", 10))}
-              className="mt-1 w-32 rounded-md border border-gray-300 bg-white px-3 py-2 focus:border-black focus:outline-none"
+              className="mt-1 w-32 rounded-md border border-gray-300 bg-white/70 backdrop-blur px-3 py-2 focus:border-black focus:outline-none"
             />
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleGenerateOutline}
               disabled={isLoading}
-              className="inline-flex items-center rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
+              className="inline-flex items-center rounded-md bg-gradient-to-r from-indigo-600 to-pink-500 px-5 py-2.5 text-white disabled:opacity-50 shadow hover:opacity-90"
             >
               {isLoading ? "Generating..." : "Generate Outline"}
             </button>
@@ -267,7 +271,7 @@ export default function HomePage() {
             <button
               onClick={handleGenerateNextChapter}
               disabled={isLoading}
-              className="inline-flex items-center rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
+              className="inline-flex items-center rounded-md bg-gradient-to-r from-indigo-600 to-pink-500 px-5 py-2.5 text-white disabled:opacity-50 shadow hover:opacity-90"
             >
               {isLoading ? "Generating..." : `Generate Chapter ${currentChapterIndex + 1}`}
             </button>
@@ -310,10 +314,26 @@ export default function HomePage() {
                 URL.revokeObjectURL(url);
               }}
             >
-              <button type="submit" className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2">
+              <button type="submit" className="inline-flex items-center rounded-md bg-gradient-to-r from-indigo-600 to-pink-500 px-5 py-2.5 text-white shadow hover:opacity-90">
                 Download DOCX
               </button>
             </form>
+          )}
+          {generatedContent.length === courseOutline.chapters.length && (
+            <button
+              onClick={() => {
+                setUserInput("");
+                setOpportunities([]);
+                setSelectedOpportunity(null);
+                setCourseOutline(null);
+                setGeneratedContent([]);
+                setCurrentChapterIndex(0);
+                setCurrentStep("idea");
+              }}
+              className="inline-flex items-center rounded-md border border-gray-300 bg-white/70 backdrop-blur px-4 py-2"
+            >
+              Create a new course
+            </button>
           )}
         </section>
       )}

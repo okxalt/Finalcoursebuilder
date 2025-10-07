@@ -4,16 +4,32 @@ import { Document, Packer, Paragraph, HeadingLevel, TextRun } from "docx";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function cleanMarkdownLine(line) {
+  let text = String(line || "");
+  // Remove heading markers
+  text = text.replace(/^#+\s*/, "");
+  // Convert leading bullets '+' or '-' or '*' to a dot
+  text = text.replace(/^\s*[+\-*]\s+/, "• ");
+  // Strip bold/italic markers **, __, *, _
+  text = text.replace(/\*\*|__/g, "");
+  text = text.replace(/(^|\s)\*(\S.*?\S)?\*(?=\s|$)/g, (_, p1, p2 = "") => `${p1}${p2}`);
+  text = text.replace(/(^|\s)_(\S.*?\S)?_(?=\s|$)/g, (_, p1, p2 = "") => `${p1}${p2}`);
+  // Remove inline code backticks
+  text = text.replace(/`+/g, "");
+  // Collapse multiple spaces
+  text = text.replace(/\s{2,}/g, " ");
+  return text.trimEnd();
+}
+
 function paragraphFromMarkdown(md) {
-  // Minimal: split by lines; ignore complex markdown; keep text
   const lines = String(md || "").split(/\r?\n/);
   const paras = [];
   for (const line of lines) {
-    const text = line.replace(/^#+\s*/, "");
-    if (text.trim().length === 0) {
+    const cleaned = cleanMarkdownLine(line);
+    if (cleaned.trim().length === 0) {
       paras.push(new Paragraph(""));
     } else {
-      paras.push(new Paragraph(text));
+      paras.push(new Paragraph(cleaned));
     }
   }
   return paras;

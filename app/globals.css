@@ -11,5 +11,15 @@ html, body {
 }
 
 body {
-  background-color: rgb(var(--background));
+  background: radial-gradient(1200px 800px at 10% 10%, rgba(99,102,241,0.25), transparent),
+              radial-gradient(1000px 700px at 90% 20%, rgba(236,72,153,0.20), transparent),
+              linear-gradient(180deg, rgba(250,250,250,1) 0%, rgba(245,247,250,1) 100%);
+}
+
+.frosted {
+  @apply backdrop-blur-md bg-white/60 border border-white/20 shadow-xl;
+}
+
+.glass-button {
+  @apply rounded-md bg-white/20 backdrop-blur-md border border-white/30 text-gray-900 hover:bg-white/30 transition;
 }
