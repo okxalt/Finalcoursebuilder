@@ -3,6 +3,8 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 
 export default function HomePage() {
   const [currentStep, setCurrentStep] = useState("idea");
@@ -251,7 +253,7 @@ export default function HomePage() {
             {docs && (
               <article className="prose max-w-none mt-3">
                 <h4 className="font-semibold">{docs.title}</h4>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{docs.content}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{docs.content}</ReactMarkdown>
               </article>
             )}
           </div>
@@ -345,7 +347,7 @@ export default function HomePage() {
             {generatedContent.map((md, idx) => (
               <article key={idx} className="prose max-w-none prose-headings:scroll-mt-20">
                 <h3 className="text-xl font-semibold">Chapter {idx + 1}</h3>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{md}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{md}</ReactMarkdown>
               </article>
             ))}
           </div>
@@ -421,7 +423,7 @@ export default function HomePage() {
           {crmContent && (
             <article className="prose max-w-none">
               <h3 className="text-xl font-semibold">CRM and Go-to-Market Pack</h3>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{crmContent}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>{crmContent}</ReactMarkdown>
             </article>
           )}
           {generatedContent.length === courseOutline.chapters.length && (

@@ -31,3 +31,19 @@ body {
   color: transparent;
   text-shadow: 0 0 12px rgba(99,102,241,0.4), 0 0 24px rgba(236,72,153,0.35);
 }
+
+/* Dark code blocks within prose */
+.prose pre {
+  @apply bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto;
+}
+.prose code {
+  @apply bg-gray-100 text-gray-900 rounded px-1 py-0.5;
+}
+.prose pre code {
+  @apply bg-transparent text-gray-100 p-0;
+}
+
+/* KaTeX math rendering adjustments */
+.katex-display {
+  @apply my-4 overflow-x-auto;
+}
