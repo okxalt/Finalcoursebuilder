@@ -18,6 +18,8 @@ export default function HomePage() {
   const [credits, setCredits] = useState(null);
   const [crmContent, setCrmContent] = useState(null);
   const [includeImages, setIncludeImages] = useState(true);
+  const [docsTopic, setDocsTopic] = useState("");
+  const [docs, setDocs] = useState(null);
 
   async function safeJson(res) {
     try {
@@ -160,6 +162,28 @@ export default function HomePage() {
     }
   }
 
+  async function handleGenerateDocs() {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const res = await fetch("/api/docs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: docsTopic || selectedOpportunity || userInput, scope: "both" }),
+      });
+      if (!res.ok) {
+        const body = await safeJson(res);
+        throw new Error(body?.error || `Failed to generate documentation (${res.status})`);
+      }
+      const data = await res.json();
+      setDocs(data);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <main className="space-y-8">
       <header className="space-y-3">
@@ -211,6 +235,25 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="rounded-xl border border-white/40 frosted p-4">
+            <h3 className="font-semibold">Generate in-depth documentation</h3>
+            <div className="mt-2 flex gap-2">
+              <input
+                type="text"
+                value={docsTopic}
+                onChange={(e)=> setDocsTopic(e.target.value)}
+                placeholder="Topic to document (leave blank to use your idea)"
+                className="flex-1 rounded-md border border-gray-300 bg-white/70 backdrop-blur px-3 py-2 focus:border-black focus:outline-none"
+              />
+              <button onClick={handleGenerateDocs} className="glass-button px-3 py-2">Generate Docs</button>
+            </div>
+            {docs && (
+              <article className="prose max-w-none mt-3">
+                <h4 className="font-semibold">{docs.title}</h4>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{docs.content}</ReactMarkdown>
+              </article>
+            )}
           </div>
         </section>
       )}
