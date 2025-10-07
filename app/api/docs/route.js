@@ -48,7 +48,22 @@ Return ONLY a JSON object with this shape: { "title": string, "content": string 
       { role: "user", content: prompt },
     ], { temperature: 0.4, max_tokens: 4096 });
 
-    const doc = extractJsonObject(content);
+    let doc;
+    try {
+      doc = extractJsonObject(content);
+    } catch (_) {
+      // try to extract JSON from code fences
+      const fenced = content.match(/```json\s*([\s\S]*?)\s*```/i);
+      if (fenced) {
+        try {
+          doc = JSON.parse(fenced[1]);
+        } catch {}
+      }
+      // fallback: wrap as markdown-only content
+      if (!doc) {
+        doc = { title: `Documentation: ${topic}`, content };
+      }
+    }
     if (!doc || typeof doc.title !== "string" || typeof doc.content !== "string") {
       return NextResponse.json({ error: "Model returned invalid documentation format" }, { status: 500 });
     }

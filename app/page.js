@@ -189,7 +189,7 @@ export default function HomePage() {
       <header className="space-y-3">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight">AI Course Creator</h1>
+            <h1 className="text-4xl font-extrabold tracking-tight neon-title">AI Course Creator</h1>
             <p className="text-gray-700">Generate a complete course or ebook from a single idea.</p>
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-700">

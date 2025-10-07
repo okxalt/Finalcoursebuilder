@@ -23,3 +23,11 @@ body {
 .glass-button {
   @apply rounded-md bg-white/20 backdrop-blur-md border border-white/30 text-gray-900 hover:bg-white/30 transition;
 }
+
+.neon-title {
+  background: linear-gradient(90deg, #6366f1, #ec4899, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 12px rgba(99,102,241,0.4), 0 0 24px rgba(236,72,153,0.35);
+}
