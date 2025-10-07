@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { Document, Packer, Paragraph, HeadingLevel, TextRun, SectionType, AlignmentType } from "docx";
+import { Document, Packer, Paragraph, HeadingLevel, TextRun, SectionType, AlignmentType, ImageRun } from "docx";
 import { Theme } from "./tokens";
 
 export const runtime = "nodejs";
@@ -36,9 +36,30 @@ function paragraphFromMarkdown(md) {
   return paras;
 }
 
+async function fetchImageArrayBuffer(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  const res = await fetch(url, { signal: controller.signal });
+  clearTimeout(timeout);
+  if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
+  const buf = await res.arrayBuffer();
+  const type = res.headers.get("content-type") || "image/jpeg";
+  return { buf, type };
+}
+
+function extractImageUrlsFromMarkdown(md) {
+  const urls = [];
+  const regex = /!\[[^\]]*\]\((https?:[^\s)]+)(?:\s+"[^"]*")?\)/g;
+  let m;
+  while ((m = regex.exec(md)) !== null) {
+    urls.push(m[1]);
+  }
+  return Array.from(new Set(urls)).slice(0, 10);
+}
+
 export async function POST(request) {
   try {
-    const { title, chapters } = await request.json();
+    const { title, chapters, includeImages } = await request.json();
     if (!title || !Array.isArray(chapters)) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
@@ -64,7 +85,7 @@ export async function POST(request) {
         },
         children: [
           titlePara,
-          ...chapters.flatMap((ch, idx) => {
+          ...(await Promise.all(chapters.map(async (ch, idx) => {
             const h1 = new Paragraph({
               children: [
                 new TextRun({ text: `Chapter ${idx + 1}: `, color: Theme.h1.color, size: Theme.h1.size, bold: true }),
@@ -87,8 +108,29 @@ export async function POST(request) {
               spacing: { before: 160, after: 100 },
             });
             const contentParas = paragraphFromMarkdown(ch.content || "");
-            return [h1, subhead, ...summaryParas, contentHeader, ...contentParas];
-          }),
+            const elements = [h1, subhead, ...summaryParas, contentHeader, ...contentParas];
+
+            if (includeImages) {
+              const urls = extractImageUrlsFromMarkdown(ch.content || "");
+              const images = await Promise.all(urls.map(async (url) => {
+                try {
+                  const { buf } = await fetchImageArrayBuffer(url);
+                  return new Paragraph({
+                    children: [
+                      new ImageRun({ data: Buffer.from(buf), transformation: { width: 640, height: 360 } }),
+                    ],
+                    spacing: { before: 120, after: 120 },
+                  });
+                } catch {
+                  return null;
+                }
+              }));
+              for (const p of images) {
+                if (p) elements.push(p);
+              }
+            }
+            return elements;
+          }))).flat(),
         ],
       },
     ];

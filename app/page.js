@@ -17,6 +17,7 @@ export default function HomePage() {
   const [error, setError] = useState(null);
   const [credits, setCredits] = useState(null);
   const [crmContent, setCrmContent] = useState(null);
+  const [includeImages, setIncludeImages] = useState(true);
 
   async function safeJson(res) {
     try {
@@ -331,6 +332,7 @@ export default function HomePage() {
                     summary: ch.summary,
                     content: generatedContent[idx] || "",
                   })),
+                  includeImages,
                 };
                 const res = await fetch("/api/export", {
                   method: "POST",
@@ -357,6 +359,12 @@ export default function HomePage() {
                 Download DOCX
               </button>
             </form>
+          )}
+          {generatedContent.length === courseOutline.chapters.length && (
+            <label className="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" checked={includeImages} onChange={(e)=> setIncludeImages(e.target.checked)} />
+              Include images from chapters (where available)
+            </label>
           )}
           {generatedContent.length === courseOutline.chapters.length && (
             <button
