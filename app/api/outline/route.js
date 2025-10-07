@@ -43,6 +43,16 @@ export async function POST(request) {
       }
     }
 
+    // Sanitize chapters
+    outline.title = typeof outline.title === "string" ? outline.title.trim() : String(outline.title || "");
+    outline.chapters = outline.chapters.map((ch, idx) => {
+      const title = typeof ch.title === "string" ? ch.title.trim() : `Chapter ${idx + 1}`;
+      const summary = Array.isArray(ch.summary)
+        ? ch.summary.filter((s) => typeof s === "string" && s.trim().length > 0).slice(0, 6)
+        : [];
+      return { title, summary };
+    });
+
     return NextResponse.json(outline);
   } catch (error) {
     // eslint-disable-next-line no-console

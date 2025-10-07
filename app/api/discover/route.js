@@ -31,6 +31,16 @@ export async function POST(request) {
     if (!opportunities) {
       opportunities = extractJsonArray(content);
     }
+
+    // Sanitize and normalize
+    opportunities = opportunities
+      .filter((v) => typeof v === "string")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .slice(0, 5);
+    // Deduplicate
+    opportunities = Array.from(new Set(opportunities));
+
     return NextResponse.json(opportunities);
   } catch (error) {
     // eslint-disable-next-line no-console
