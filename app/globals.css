@@ -47,3 +47,7 @@ body {
 .katex-display {
   @apply my-4 overflow-x-auto;
 }
+
+.pdf-surface {
+  background: linear-gradient(180deg, #f7f9ff 0%, #f1f5ff 100%);
+}

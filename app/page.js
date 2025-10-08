@@ -320,7 +320,7 @@ export default function HomePage() {
       )}
 
       {currentStep === "generation" && courseOutline && (
-        <section className="space-y-6" ref={pdfRef}>
+        <section className="space-y-6 pdf-surface" ref={pdfRef}>
           <div>
             <h2 className="text-2xl font-semibold">{courseOutline.title}</h2>
             <p className="text-gray-600">{selectedOpportunity}</p>
@@ -344,7 +344,7 @@ export default function HomePage() {
             </ol>
           </details>
 
-          <div className="space-y-6">
+          <div className="space-y-6 pdf-content px-6 py-6">
             {generatedContent.map((md, idx) => (
               <article key={idx} className="prose max-w-none prose-headings:scroll-mt-20">
                 <h3 className="text-xl font-semibold">Chapter {idx + 1}</h3>
@@ -413,26 +413,28 @@ export default function HomePage() {
                   import("jspdf"),
                   import("html2canvas"),
                 ]);
-                const container = pdfRef.current;
+                const container = pdfRef.current?.querySelector(".pdf-content") || pdfRef.current;
                 const canvas = await html2canvas.default(container, {
                   scale: 2,
                   useCORS: true,
                   backgroundColor: null,
                 });
                 const imgData = canvas.toDataURL("image/png");
+                const margin = 36; // 0.5 inch margins
                 const pdf = new jsPDF({ unit: "pt", format: "a4" });
                 const pageWidth = pdf.internal.pageSize.getWidth();
-                const imgWidth = pageWidth;
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = pageWidth - margin * 2;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
                 let position = 0;
                 let heightLeft = imgHeight;
-                pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-                heightLeft -= pdf.internal.pageSize.getHeight();
+                pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
+                heightLeft -= pageHeight - margin * 2;
                 while (heightLeft > 0) {
                   pdf.addPage();
                   position = heightLeft - imgHeight;
-                  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-                  heightLeft -= pdf.internal.pageSize.getHeight();
+                  pdf.addImage(imgData, "PNG", margin, position + margin, imgWidth, imgHeight);
+                  heightLeft -= pageHeight - margin * 2;
                 }
                 pdf.save(`${courseOutline.title}.pdf`);
               }}
