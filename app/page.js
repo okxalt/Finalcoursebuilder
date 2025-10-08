@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -22,6 +22,7 @@ export default function HomePage() {
   const [includeImages, setIncludeImages] = useState(true);
   const [docsTopic, setDocsTopic] = useState("");
   const [docs, setDocs] = useState(null);
+  const pdfRef = useRef(null);
 
   async function safeJson(res) {
     try {
@@ -319,7 +320,7 @@ export default function HomePage() {
       )}
 
       {currentStep === "generation" && courseOutline && (
-        <section className="space-y-6">
+        <section className="space-y-6" ref={pdfRef}>
           <div>
             <h2 className="text-2xl font-semibold">{courseOutline.title}</h2>
             <p className="text-gray-600">{selectedOpportunity}</p>
@@ -404,6 +405,41 @@ export default function HomePage() {
                 Download DOCX
               </button>
             </form>
+          )}
+          {generatedContent.length === courseOutline.chapters.length && (
+            <button
+              onClick={async () => {
+                const [{ jsPDF }, html2canvas] = await Promise.all([
+                  import("jspdf"),
+                  import("html2canvas"),
+                ]);
+                const container = pdfRef.current;
+                const canvas = await html2canvas.default(container, {
+                  scale: 2,
+                  useCORS: true,
+                  backgroundColor: null,
+                });
+                const imgData = canvas.toDataURL("image/png");
+                const pdf = new jsPDF({ unit: "pt", format: "a4" });
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const imgWidth = pageWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let position = 0;
+                let heightLeft = imgHeight;
+                pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+                heightLeft -= pdf.internal.pageSize.getHeight();
+                while (heightLeft > 0) {
+                  pdf.addPage();
+                  position = heightLeft - imgHeight;
+                  pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+                  heightLeft -= pdf.internal.pageSize.getHeight();
+                }
+                pdf.save(`${courseOutline.title}.pdf`);
+              }}
+              className="inline-flex items-center rounded-md bg-white/80 backdrop-blur px-4 py-2 border border-gray-300"
+            >
+              Download PDF
+            </button>
           )}
           {generatedContent.length === courseOutline.chapters.length && (
             <label className="flex items-center gap-2 text-sm text-gray-700">
